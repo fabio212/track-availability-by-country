@@ -1,0 +1,6 @@
+{
+  "pushedButton": "You have pushed the button this many times",
+  "@pushedButton": {
+    "description": "A feedback of a pushed button"
+  }
+}
