@@ -1,3 +1,4 @@
+import 'package:track_availability_by_country/models/auth.dart';
 import 'package:track_availability_by_country/services/local_storage.dart';
 
 import '../auth/spotify_auth.dart';
@@ -17,12 +18,7 @@ abstract class BaseSpotify extends Base {
   }
 
   Future<String> _accessToken() async {
-    LocalStorage localStorage = LocalStorage();
-    String accessToken = await localStorage.read('SPOTIFY_ACCESS_TOKEN');
-    if (accessToken.isEmpty) {
-      await SpotifyAuth().execute();
-      _accessToken();
-    }
-    return accessToken;
+    Auth auth = await SpotifyAuth().execute();
+    return auth.accessToken;
   }
 }

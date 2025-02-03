@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:track_availability_by_country/services/spotify/requests/search_spotify_track.dart';
-import 'package:track_availability_by_country/widgets/track_card.dart';
+import 'package:track_availability_by_country/widgets/list_track_card.dart';
 
 import '../../models/track.dart';
+import '../../services/spotify/requests/retrieve_all_countries.dart';
+import '../../utils/countries.dart';
 
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key, required this.title});
@@ -26,24 +27,32 @@ class SearchPage extends StatefulWidget {
 class _SearchPageState extends State<SearchPage> {
   List<Track> _tracks = List.empty();
   final SearchSpotifyTrack _search = SearchSpotifyTrack();
-  List<Widget> _cards = List.empty();
+  final RetrieveAllCountries retrieveAllCountries = RetrieveAllCountries();
   String _query = '';
-  final List<String> _markets = ['BR', 'CA', 'GB', 'MX', 'US'];
+  List<String> _markets = [];
   String _selectedMarket = 'GB';
 
-  void _searchTracks(String value) async {
-    _query = value;
-    var tracks = await _search.execute(_query, market: _selectedMarket);
+  @override
+  void initState() {
+    super.initState();
+    _setUpCountries();
+  }
+
+  void _setUpCountries() async {
+    var markets = await retrieveAllCountries.execute();
+    var selectedMarket = await Countries.getLastCountrySelected();
     setState(() {
-      _tracks = tracks;
-      _cards = _mountTracksWidgetsList(_tracks);
+      _markets = markets;
+      _selectedMarket = selectedMarket;
     });
   }
 
-  List<Widget> _mountTracksWidgetsList(List<Track> tracks) {
-    return _tracks.map((track) {
-      return TrackCard(track: track);
-    }).toList();
+  void _searchTracks(String value) async {
+    _query = value;
+    var tracks = await _search.searchTracks(_query, market: _selectedMarket);
+    setState(() {
+      _tracks = tracks;
+    });
   }
 
   @override
@@ -59,26 +68,34 @@ class _SearchPageState extends State<SearchPage> {
         children: <Widget>[
           Row(
             children: [
-              DropdownMenu(
-                dropdownMenuEntries: _markets.map((market) {
-                  return DropdownMenuEntry(value: market, label: market);
-                }).toList(),
-                initialSelection: _selectedMarket,
-                onSelected: (value) {
-                  _selectedMarket = value ?? '';
-                  _searchTracks(_query);
-                },
+              Expanded(
+                flex: 3,
+                child: DropdownMenu(
+                  dropdownMenuEntries: _markets.map((market) {
+                    return DropdownMenuEntry(value: market, label: market);
+                  }).toList(),
+                  initialSelection: _selectedMarket,
+                  onSelected: (value) {
+                    _selectedMarket = value ?? '';
+                    Countries.saveLastCountrySelected(_selectedMarket);
+                    _searchTracks(_query);
+                  },
+                ),
               ),
-              SearchBar(
-                onChanged: (value) => _searchTracks(value),
+              Expanded(
+                flex: 7,
+                child: SearchBar(
+                  onChanged: (value) => _searchTracks(value),
+                ),
               ),
             ],
           ),
-          SingleChildScrollView(
-            child: Column(
-              children: _cards,
-            ),
-          )
+          ListTrackCard(
+            tracks: _tracks,
+            onClick: (String id) {
+              Navigator.pushNamed(context, '/track/$id');
+            },
+          ),
         ],
       )
     );

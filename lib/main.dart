@@ -3,6 +3,7 @@ import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:track_availability_by_country/screens/tracks/search.dart';
 
 import 'constants.dart';
+import 'screens/tracks/available_countries.dart';
 
 void main() {
   runApp(const MyApp());
@@ -39,7 +40,24 @@ class MyApp extends StatelessWidget {
       ),
       initialRoute: '/',
       routes: {
-        '/': (context) => const SearchPage(title: 'Search for Track')
+        '/': (context) => const SearchPage(title: 'Search for Track'),
+      },
+      onGenerateRoute: (settings) {
+        final uri = Uri.parse(settings.name!);
+
+        // Rota no formato /track/{trackId}
+        if (uri.pathSegments.length == 2 && uri.pathSegments.first == 'track') {
+          final trackId = uri.pathSegments[1];
+          return MaterialPageRoute(
+            builder: (context) => AvailableCountries(trackId: trackId),
+          );
+        }
+        // Rota não encontrada
+        return MaterialPageRoute(
+          builder: (context) => const Scaffold(
+            body: Center(child: Text('Página não encontrada')),
+          ),
+        );
       },
     );
   }
