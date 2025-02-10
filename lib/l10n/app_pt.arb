@@ -1,11 +1,16 @@
 {
   "selectedTrack": "Faixa selecionada",
-  "countriesList": "Esta faixa está disponível em {count, plural, zero{{count} países} one{{count} país} other{{count} países}} (incluindo {country})",
+  "countriesList": "Esta faixa está disponível em {count, plural, zero{{count} países} one{{count} país} other{{count} países}}",
   "@countriesList": {
     "placeholders": {
       "count": {
         "type": "int"
-      },
+      }
+    }
+  },
+  "includingCountry": "incluíndo {country}",
+  "@includingCountry": {
+    "placeholders": {
       "country": {
         "type": "String"
       }

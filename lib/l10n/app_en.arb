@@ -1,11 +1,16 @@
 {
   "selectedTrack": "Selected Track",
-  "countriesList": "This track is available in {count, plural, zero{{count} countries} one{{count} country} other{{count} countries}} (including {country})",
+  "countriesList": "This track is available in {count, plural, zero{{count} countries} one{{count} country} other{{count} countries}}",
   "@countriesList": {
     "placeholders": {
       "count": {
         "type": "int"
-      },
+      }
+    }
+  },
+  "includingCountry": "including {country}",
+  "@includingCountry": {
+    "placeholders": {
       "country": {
         "type": "String"
       }
