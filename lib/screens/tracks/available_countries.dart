@@ -54,7 +54,7 @@ class _AvailableCountriesState extends State<AvailableCountries> {
                 TrackCard(track: track),
                 const SizedBox(height: 20),
                 Text(AppLocalizations.of(context)!.countriesList(track.spotify.markets.length)),
-                Text(AppLocalizations.of(context)!.includingCountry(Countries.getCountryName(_userCountry))),
+                track.spotify.markets.contains(_userCountry) ? Text(AppLocalizations.of(context)!.includingCountry(Countries.getCountryName(_userCountry))) : Container(),
                 const SizedBox(height: 20),
                 Expanded(
                   child: ListView.builder(
