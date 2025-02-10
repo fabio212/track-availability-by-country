@@ -1,0 +1,18 @@
+{
+  "selectedTrack": "Faixa selecionada",
+  "countriesList": "Esta faixa está disponível em {count, plural, zero{{count} países} one{{count} país} other{{count} países}} (incluindo {country})",
+  "@countriesList": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "country": {
+        "type": "String"
+      }
+    }
+  },
+  "searchHint": "Pesquisar",
+  "select": "Selecionar",
+  "appDescription": "Este pequeno app diz em quais países determinada música está disponível. Faça uma pesquisa no campo abaixo e clique em um item.",
+  "errorLoadingData": "Erro ao carregar dados. Por favor, tente novamente mais tarde."
+}

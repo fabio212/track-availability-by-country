@@ -1,4 +1,8 @@
+import 'dart:async';
+
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:track_availability_by_country/services/spotify/requests/search_spotify_track.dart';
 import 'package:track_availability_by_country/widgets/list_track_card.dart';
 
@@ -9,15 +13,6 @@ import '../../utils/countries.dart';
 class SearchPage extends StatefulWidget {
   const SearchPage({super.key, required this.title});
 
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
   final String title;
 
   @override
@@ -25,12 +20,12 @@ class SearchPage extends StatefulWidget {
 }
 
 class _SearchPageState extends State<SearchPage> {
-  List<Track> _tracks = List.empty();
   final SearchSpotifyTrack _search = SearchSpotifyTrack();
   final RetrieveAllCountries retrieveAllCountries = RetrieveAllCountries();
   String _query = '';
   List<String> _markets = [];
-  String _selectedMarket = 'GB';
+  String _selectedMarket = '';
+  Timer? _inputTimer;
 
   @override
   void initState() {
@@ -47,57 +42,113 @@ class _SearchPageState extends State<SearchPage> {
     });
   }
 
-  void _searchTracks(String value) async {
-    _query = value;
-    var tracks = await _search.searchTracks(_query, market: _selectedMarket);
-    setState(() {
-      _tracks = tracks;
+  Future<List<Track>> _searchTracks(String value) async {
+    return _search.searchTracks(value, market: _selectedMarket);
+  }
+
+  DropdownButton _mountDropdown(BuildContext context) {
+    return DropdownButton(
+      items: _markets.map((market) {
+        String countryName = Countries.getCountryName(market);
+        return DropdownMenuItem(value: market, child: Text(countryName.isEmpty ? market : '$market - $countryName'));
+      }).toList(),
+      onChanged: (value) async {
+        _selectedMarket = value ?? '';
+        await Countries.saveLastCountrySelected(_selectedMarket);
+        _setUpCountries();
+        if (_query.isNotEmpty) _searchTracks(_query);
+      },
+      hint: Text(AppLocalizations.of(context)!.select),
+      value: _selectedMarket,
+    );
+  }
+
+  TextField _mountInputSearch(BuildContext context) {
+    return TextField(
+      decoration: const InputDecoration(
+        border: OutlineInputBorder(),
+        hintText: 'Search',
+      ),
+      onChanged: _onTextChanged,
+    );
+  }
+
+  void _onTextChanged(String text) {
+    if (_inputTimer != null) {
+      _inputTimer!.cancel();
+    }
+
+    _inputTimer = Timer(const Duration(seconds: 1), () {
+      setState(() {
+        _query = text;
+      });
     });
   }
 
   @override
+  void dispose() {
+    _inputTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
-      body: Column(
-        children: <Widget>[
-          Row(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
             children: [
-              Expanded(
-                flex: 3,
-                child: DropdownMenu(
-                  dropdownMenuEntries: _markets.map((market) {
-                    return DropdownMenuEntry(value: market, label: market);
-                  }).toList(),
-                  initialSelection: _selectedMarket,
-                  onSelected: (value) {
-                    _selectedMarket = value ?? '';
-                    Countries.saveLastCountrySelected(_selectedMarket);
-                    _searchTracks(_query);
-                  },
-                ),
+              Text(AppLocalizations.of(context)!.appDescription),
+              const SizedBox(height: 16),
+              LayoutBuilder(
+                builder: (context, constraints) {
+                  if (constraints.maxWidth < 600) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        _mountDropdown(context),
+                        const SizedBox(height: 8),
+                        _mountInputSearch(context),
+                      ],
+                    );
+                  } else {
+                    return Row(
+                      children: [
+                        Expanded(
+                          child: _mountDropdown(context),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _mountInputSearch(context),
+                        ),
+                      ],
+                    );
+                  }
+                },
               ),
-              Expanded(
-                flex: 7,
-                child: SearchBar(
-                  onChanged: (value) => _searchTracks(value),
-                ),
+              const SizedBox(height: 16),
+              FutureBuilder<List<Track>>(
+                future: _searchTracks(_query),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(child: Text(AppLocalizations.of(context)!.errorLoadingData));
+                  } else {
+                    return ListTrackCard(
+                      tracks: snapshot.data!,
+                      onClick: (String id) {
+                        context.go('/track/$id');
+                      },
+                    );
+                  }
+                },
               ),
             ],
           ),
-          ListTrackCard(
-            tracks: _tracks,
-            onClick: (String id) {
-              Navigator.pushNamed(context, '/track/$id');
-            },
-          ),
-        ],
-      )
+        ),
+      ),
     );
   }
 }

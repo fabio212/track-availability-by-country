@@ -1,6 +1,18 @@
 {
-  "pushedButton": "You have pushed the button this many times",
-  "@pushedButton": {
-    "description": "A feedback of a pushed button"
-  }
+  "selectedTrack": "Selected Track",
+  "countriesList": "This track is available in {count, plural, zero{{count} countries} one{{count} country} other{{count} countries}} (including {country})",
+  "@countriesList": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "country": {
+        "type": "String"
+      }
+    }
+  },
+  "searchHint": "Search",
+  "select": "Select",
+  "appDescription": "This small app tells you in which countries a certain song is available. Do a search in the field below and click on an item.",
+  "errorLoadingData": "Error loading data. Please try again later."
 }

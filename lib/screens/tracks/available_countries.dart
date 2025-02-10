@@ -1,20 +1,13 @@
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:track_availability_by_country/services/spotify/requests/search_spotify_track.dart';
 import 'package:track_availability_by_country/widgets/track_card.dart';
 
 import '../../models/track.dart';
+import '../../utils/countries.dart';
 
 class AvailableCountries extends StatefulWidget {
   const AvailableCountries({super.key, required this.trackId});
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
 
   final String trackId;
 
@@ -23,42 +16,67 @@ class AvailableCountries extends StatefulWidget {
 }
 
 class _AvailableCountriesState extends State<AvailableCountries> {
-  late Track _track;
   final SearchSpotifyTrack _search = SearchSpotifyTrack();
+  String _userCountry = '';
 
   @override
   void initState() {
     super.initState();
-    getTrack(widget.trackId);
+    _setUserCountry();
   }
 
-  void getTrack(String value) async {
-    var track = await _search.getTrack(value);
+  Future<void> _setUserCountry() async {
+    _userCountry = await Countries.getUserCountry();
     setState(() {
-      _track = track;
+      _userCountry = _userCountry;
     });
+  }
+
+  Future<Track> _getTrack(String value) async {
+    return _search.getTrack(value);
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
-      body: Column(
-        children: <Widget>[
-          const Text('Faixa Selecionada'),
-          _track == null ? Container() : TrackCard(track: _track),
-          const SizedBox(height: 20),
-          const Text('Esta faixa está disponível nos seguintes países'),
-          const SizedBox(height: 20),
-          Container(
-            child: Text(_track.spotify.markets.join(', ')),
-          ),
-        ],
+      body: FutureBuilder<Track>(
+        future: _getTrack(widget.trackId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text(AppLocalizations.of(context)!.errorLoadingData));
+          } else {
+            final track = snapshot.data!;
+            return Column(
+              children: <Widget>[
+                Text(AppLocalizations.of(context)!.selectedTrack),
+                TrackCard(track: track),
+                const SizedBox(height: 20),
+                Text(AppLocalizations.of(context)!.countriesList(track.spotify.markets.length, Countries.getCountryName(_userCountry))),
+                const SizedBox(height: 20),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: track.spotify.markets.length,
+                    itemBuilder: (_, index) {
+                      final item = track.spotify.markets[index];
+                      String countryName = Countries.getCountryName(item);
+                      return ListTile(
+                        title: Text(
+                          countryName.isEmpty ? item : '$item - $countryName',
+                          style: item == _userCountry ? const TextStyle(
+                            color: Colors.green,
+                            fontWeight: FontWeight.bold,
+                          ) : null,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            );
+          }
+        },
       )
     );
   }

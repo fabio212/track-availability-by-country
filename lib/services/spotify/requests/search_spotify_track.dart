@@ -11,20 +11,26 @@ import 'base_spotify.dart';
 
 class SearchSpotifyTrack extends BaseSpotify {
   Future<List<Track>> searchTracks(String query, { String market = 'BR' }) async {
-    var response = await get('/search?q=$query&market=$market&type=track');
-    final Map json = jsonDecode(response.body);
+    if (query.contains('spotify:track:')) {
+      return [await getTrack(query.split('spotify:track:')[1])];
+    } else if (query.contains('/track/')) {
+      return [await getTrack(query.split('/track/')[1].split('?')[0])];
+    } else {
+      var response = await get('/search?q=$query&market=$market&type=track');
+      final Map json = jsonDecode(response.body);
 
-    if (json['tracks'] == null || json['tracks']['items'] == null) {
-      return [];
+      if (json['tracks'] == null || json['tracks']['items'] == null) {
+        return [];
+      }
+
+      List items = json['tracks']['items'];
+      List<Track> tracks = [];
+      items.forEach((item) {
+        tracks.add(_mountTrack(item));
+      });
+
+      return tracks;
     }
-
-    List items = json['tracks']['items'];
-    List<Track> tracks = [];
-    items.forEach((item) {
-      tracks.add(_mountTrack(item));
-    });
-
-    return tracks;
 
   }
 

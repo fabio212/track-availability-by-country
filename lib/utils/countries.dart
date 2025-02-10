@@ -1,11 +1,215 @@
+import '../services/geoip/requests/get_current_iso_country.dart';
 import '../services/local_storage.dart';
 
 class Countries {
-  static void saveLastCountrySelected(String country) {
-    LocalStorage().add('LAST_COUNTRY_SELECTED', country);
+  static Future<void> saveLastCountrySelected(String country) async {
+    await LocalStorage().add('LAST_COUNTRY_SELECTED', country);
+  }
+
+  static Future<void> _saveUserCountry(String country) async {
+    await LocalStorage().add('USER_COUNTRY', country);
   }
 
   static Future<String> getLastCountrySelected() async {
-    return await LocalStorage().read('LAST_COUNTRY_SELECTED');
+    String lastCountry = await LocalStorage().read('LAST_COUNTRY_SELECTED');
+    if (lastCountry == '') {
+      String currentIso = await getUserCountry();
+      await saveLastCountrySelected(currentIso);
+      return currentIso;
+    }
+    return lastCountry;
+  }
+
+  static Future<String> getUserCountry() async {
+    String userCountry = await LocalStorage().read('USER_COUNTRY');
+    if (userCountry == '') {
+      GetCurrentIsoCountry getCurrentIso = GetCurrentIsoCountry();
+      String currentIso = await getCurrentIso.execute();
+      await _saveUserCountry(currentIso);
+      return currentIso;
+    }
+    return userCountry;
+  }
+
+  static String getCountryName(String isoCode) {
+    const Map<String, String> countryNames = {
+      "AR": "Argentina",
+      "AU": "Australia",
+      "AT": "Austria",
+      "BE": "Belgium",
+      "BO": "Bolivia",
+      "BR": "Brazil",
+      "BG": "Bulgaria",
+      "CA": "Canada",
+      "CL": "Chile",
+      "CO": "Colombia",
+      "CR": "Costa Rica",
+      "CY": "Cyprus",
+      "CZ": "Czech Republic",
+      "DK": "Denmark",
+      "DO": "Dominican Republic",
+      "DE": "Germany",
+      "EC": "Ecuador",
+      "EE": "Estonia",
+      "SV": "El Salvador",
+      "FI": "Finland",
+      "FR": "France",
+      "GR": "Greece",
+      "GT": "Guatemala",
+      "HN": "Honduras",
+      "HK": "Hong Kong",
+      "HU": "Hungary",
+      "IS": "Iceland",
+      "IE": "Ireland",
+      "IT": "Italy",
+      "LV": "Latvia",
+      "LT": "Lithuania",
+      "LU": "Luxembourg",
+      "MY": "Malaysia",
+      "MT": "Malta",
+      "MX": "Mexico",
+      "NL": "Netherlands",
+      "NZ": "New Zealand",
+      "NI": "Nicaragua",
+      "NO": "Norway",
+      "PA": "Panama",
+      "PY": "Paraguay",
+      "PE": "Peru",
+      "PH": "Philippines",
+      "PL": "Poland",
+      "PT": "Portugal",
+      "SG": "Singapore",
+      "SK": "Slovakia",
+      "ES": "Spain",
+      "CH": "Switzerland",
+      "TW": "Taiwan",
+      "TR": "Turkey",
+      "UY": "Uruguay",
+      "US": "United States",
+      "GB": "United Kingdom",
+      "AD": "Andorra",
+      "LI": "Liechtenstein",
+      "MC": "Monaco",
+      "ID": "Indonesia",
+      "JP": "Japan",
+      "TH": "Thailand",
+      "VN": "Vietnam",
+      "RO": "Romania",
+      "IL": "Israel",
+      "ZA": "South Africa",
+      "SA": "Saudi Arabia",
+      "AE": "United Arab Emirates",
+      "BH": "Bahrain",
+      "QA": "Qatar",
+      "OM": "Oman",
+      "KW": "Kuwait",
+      "EG": "Egypt",
+      "MA": "Morocco",
+      "DZ": "Algeria",
+      "TN": "Tunisia",
+      "LB": "Lebanon",
+      "JO": "Jordan",
+      "PS": "Palestine",
+      "IN": "India",
+      "KZ": "Kazakhstan",
+      "MD": "Moldova",
+      "UA": "Ukraine",
+      "AL": "Albania",
+      "BA": "Bosnia and Herzegovina",
+      "HR": "Croatia",
+      "ME": "Montenegro",
+      "MK": "North Macedonia",
+      "RS": "Serbia",
+      "SI": "Slovenia",
+      "KR": "South Korea",
+      "BD": "Bangladesh",
+      "PK": "Pakistan",
+      "LK": "Sri Lanka",
+      "GH": "Ghana",
+      "KE": "Kenya",
+      "NG": "Nigeria",
+      "TZ": "Tanzania",
+      "UG": "Uganda",
+      "AG": "Antigua and Barbuda",
+      "AM": "Armenia",
+      "BS": "Bahamas",
+      "BB": "Barbados",
+      "BZ": "Belize",
+      "BT": "Bhutan",
+      "BW": "Botswana",
+      "BF": "Burkina Faso",
+      "CV": "Cape Verde",
+      "CW": "Curaçao",
+      "DM": "Dominica",
+      "FJ": "Fiji",
+      "GM": "Gambia",
+      "GE": "Georgia",
+      "GD": "Grenada",
+      "GW": "Guinea-Bissau",
+      "GY": "Guyana",
+      "HT": "Haiti",
+      "JM": "Jamaica",
+      "KI": "Kiribati",
+      "LS": "Lesotho",
+      "LR": "Liberia",
+      "MW": "Malawi",
+      "MV": "Maldives",
+      "ML": "Mali",
+      "MH": "Marshall Islands",
+      "FM": "Micronesia",
+      "NA": "Namibia",
+      "NR": "Nauru",
+      "NE": "Niger",
+      "PW": "Palau",
+      "PG": "Papua New Guinea",
+      "WS": "Samoa",
+      "SM": "San Marino",
+      "ST": "Sao Tome and Principe",
+      "SN": "Senegal",
+      "SC": "Seychelles",
+      "SL": "Sierra Leone",
+      "SB": "Solomon Islands",
+      "KN": "Saint Kitts and Nevis",
+      "LC": "Saint Lucia",
+      "VC": "Saint Vincent and the Grenadines",
+      "SR": "Suriname",
+      "TL": "Timor-Leste",
+      "TO": "Tonga",
+      "TT": "Trinidad and Tobago",
+      "TV": "Tuvalu",
+      "VU": "Vanuatu",
+      "AZ": "Azerbaijan",
+      "BN": "Brunei",
+      "BI": "Burundi",
+      "KH": "Cambodia",
+      "CM": "Cameroon",
+      "TD": "Chad",
+      "KM": "Comoros",
+      "GQ": "Equatorial Guinea",
+      "SZ": "Eswatini",
+      "GA": "Gabon",
+      "GN": "Guinea",
+      "KG": "Kyrgyzstan",
+      "LA": "Laos",
+      "MO": "Macau",
+      "MR": "Mauritania",
+      "MN": "Mongolia",
+      "NP": "Nepal",
+      "RW": "Rwanda",
+      "TG": "Togo",
+      "UZ": "Uzbekistan",
+      "ZW": "Zimbabwe",
+      "BJ": "Benin",
+      "MG": "Madagascar",
+      "MU": "Mauritius",
+      "MZ": "Mozambique",
+      "AO": "Angola",
+      "CI": "Ivory Coast",
+      "DJ": "Djibouti",
+      "ZM": "Zambia",
+      "CD": "Democratic Republic of the Congo"
+    };
+
+    return countryNames[isoCode] ?? '';
   }
 }
